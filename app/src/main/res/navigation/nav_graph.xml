@@ -3,26 +3,32 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/FirstFragment">
+    app:startDestination="@id/PostListFragment">
 
     <fragment
-        android:id="@+id/FirstFragment"
-        android:name="com.app.FirstFragment"
-        android:label="@string/first_fragment_label"
-        tools:layout="@layout/fragment_first">
+        android:id="@+id/FragmentLogin"
+        android:name="com.app.auth.login.LoginFragment"
+        android:label="@string/login"
+        tools:layout="@layout/fragment_login" />
+
+    <fragment
+        android:id="@+id/PostListFragment"
+        android:name="com.app.todo.posts.PostListFragment"
+        android:label="@string/post_list_fragment_label">
 
         <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
+            android:id="@+id/action_ItemListFragment_to_ItemEditFragment"
+            app:destination="@id/PostEditFragment" />
     </fragment>
+
     <fragment
-        android:id="@+id/SecondFragment"
-        android:name="com.app.SecondFragment"
-        android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second">
+        android:id="@+id/PostEditFragment"
+        android:name="com.app.todo.post.PostEditFragment"
+        android:label="@string/post_edit_fragment_label"
+        tools:layout="@layout/fragment_post_edit">
 
         <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/FirstFragment" />
+            android:id="@+id/action_ItemEditFragment_to_ItemListFragment"
+            app:destination="@id/PostListFragment" />
     </fragment>
 </navigation>
