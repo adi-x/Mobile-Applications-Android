@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.app.core.TAG
 import com.app.databinding.FragmentPostEditBinding
+import com.app.todo.data.Post
 
 class PostEditFragment : Fragment() {
     companion object {
@@ -19,6 +20,7 @@ class PostEditFragment : Fragment() {
 
     private lateinit var viewModel: PostEditViewModel
     private var postId: Long? = null
+    private var post: Post? = null
 
     private var _binding: FragmentPostEditBinding? = null
 
@@ -44,11 +46,14 @@ class PostEditFragment : Fragment() {
         setupViewModel()
         binding.fab.setOnClickListener {
             Log.v(TAG, "save post")
-            viewModel.saveOrUpdatePost(
-                binding.postImageUrl.text.toString(),
-                binding.postTitle.text.toString(),
-                binding.postDescription.text.toString()
-            )
+            val _post = post
+            if (_post != null) {
+                _post.title = binding.postTitle.text.toString()
+                _post.description = binding.postDescription.text.toString()
+                _post.imageUrl = binding.postImageUrl.text.toString()
+                viewModel.saveOrUpdatePost(_post)
+            }
+
         }
     }
 
@@ -60,12 +65,6 @@ class PostEditFragment : Fragment() {
 
     private fun setupViewModel() {
         viewModel = ViewModelProvider(this).get(PostEditViewModel::class.java)
-        viewModel.post.observe(viewLifecycleOwner, { post ->
-            Log.v(TAG, "update posts")
-            binding.postImageUrl.setText(post.imageUrl);
-            binding.postTitle.setText(post.title);
-            binding.postDescription.setText(post.description);
-        })
         viewModel.fetching.observe(viewLifecycleOwner, { fetching ->
             Log.v(TAG, "update fetching")
             binding.progress.visibility = if (fetching) View.VISIBLE else View.GONE
@@ -87,8 +86,18 @@ class PostEditFragment : Fragment() {
             }
         })
         val id = postId
-        if (id != null) {
-            viewModel.loadPost(id)
+        if (id == null) {
+            post = Post(-1, "", "", "", "", -1.0, -1.0)
+        } else {
+            viewModel.getItemById(id).observe(viewLifecycleOwner, {
+                Log.v(TAG, "update items")
+                if (it != null) {
+                    post = it
+                    binding.postTitle.setText(it.title)
+                    binding.postDescription.setText(it.description)
+                    binding.postImageUrl.setText(it.imageUrl)
+                }
+            })
         }
     }
 }

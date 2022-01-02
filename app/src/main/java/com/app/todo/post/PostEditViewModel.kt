@@ -1,67 +1,50 @@
 package com.app.todo.post
 
+import android.app.Application
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.app.todo.data.PostRepository
 import com.app.core.TAG
 import com.app.todo.data.Post
 import com.app.core.Result
+import com.app.todo.data.local.TodoDatabase
 import kotlinx.coroutines.launch
 
-class PostEditViewModel : ViewModel() {
-    private val mutablePost = MutableLiveData<Post>().apply { value = Post(-1, "", "", "", "", .0, .0) }
+class PostEditViewModel(application: Application) : AndroidViewModel(application) {
     private val mutableFetching = MutableLiveData<Boolean>().apply { value = false }
     private val mutableCompleted = MutableLiveData<Boolean>().apply { value = false }
     private val mutableException = MutableLiveData<Exception>().apply { value = null }
 
-    val post: LiveData<Post> = mutablePost
     val fetching: LiveData<Boolean> = mutableFetching
     val fetchingError: LiveData<Exception> = mutableException
     val completed: LiveData<Boolean> = mutableCompleted
 
-    fun loadPost(postId: Long) {
-        viewModelScope.launch {
-            Log.i(TAG, "loadPost...")
-            mutableFetching.value = true
-            mutableException.value = null
-            when (val result = PostRepository.load(postId)) {
-                is Result.Success -> {
-                    Log.d(TAG, "loadPost succeeded");
-                    mutablePost.value = result.data
-                }
-                is Result.Error -> {
-                    Log.w(TAG, "loadPost failed", result.exception);
-                    mutableException.value = result.exception
-                }
-            }
-            mutableFetching.value = false
-        }
+    val postRepository: PostRepository
+
+    init {
+        val postDao = TodoDatabase.getDatabase(application, viewModelScope).postDao()
+        postRepository = PostRepository(postDao)
     }
 
-    fun saveOrUpdatePost(imageUrl: String, title: String, description: String) {
+    fun getItemById(postId: Long): LiveData<Post> {
+        Log.v(TAG, "getItemById...")
+        return postRepository.getById(postId)
+    }
+
+    fun saveOrUpdatePost(post: Post) {
         viewModelScope.launch {
             Log.v(TAG, "saveOrUpdatePost...");
-            val post = mutablePost.value ?: return@launch
-
-            post.imageUrl = imageUrl
-            post.title = title
-            post.description = description
-
             mutableFetching.value = true
             mutableException.value = null
             val result: Result<Post>
             if (post.id != -1L) {
-                result = PostRepository.update(post)
+                result = postRepository.update(post)
             } else {
-                result = PostRepository.save(post)
+                result = postRepository.save(post)
             }
             when (result) {
                 is Result.Success -> {
                     Log.d(TAG, "saveOrUpdatePost succeeded");
-                    mutablePost.value = result.data
                 }
                 is Result.Error -> {
                     Log.w(TAG, "saveOrUpdatePost failed", result.exception);

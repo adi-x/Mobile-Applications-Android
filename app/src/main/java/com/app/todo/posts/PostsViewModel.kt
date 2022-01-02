@@ -1,43 +1,42 @@
 package com.app.todo.posts
 
+import android.app.Application
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.app.todo.data.PostRepository
 import com.app.core.TAG
 import com.app.core.Result
 import com.app.todo.data.Post
+import com.app.todo.data.local.TodoDatabase
 import kotlinx.coroutines.launch
 
-class PostListViewModel : ViewModel() {
-    private val mutablePosts = MutableLiveData<List<Post>>().apply { value = emptyList() }
+class PostListViewModel(application: Application) : AndroidViewModel(application) {
     private val mutableLoading = MutableLiveData<Boolean>().apply { value = false }
     private val mutableException = MutableLiveData<Exception>().apply { value = null }
 
-    val posts: LiveData<List<Post>> = mutablePosts
+    val posts: LiveData<List<Post>>
     val loading: LiveData<Boolean> = mutableLoading
     val loadingError: LiveData<Exception> = mutableException
 
-    fun createPost(position: Int): Unit {
-        val list = mutableListOf<Post>()
-        list.addAll(mutablePosts.value!!)
-        mutablePosts.value = list
+    val postRepository: PostRepository
+
+    init {
+        val postDao = TodoDatabase.getDatabase(application, viewModelScope).postDao()
+        postRepository = PostRepository(postDao)
+        posts = postRepository.posts
     }
 
-    fun loadPosts() {
+    fun refresh() {
         viewModelScope.launch {
-            Log.v(TAG, "loadPosts...");
+            Log.v(TAG, "refresh...")
             mutableLoading.value = true
             mutableException.value = null
-            when (val result = PostRepository.loadAll()) {
+            when (val result = postRepository.refresh()) {
                 is Result.Success -> {
-                    Log.d(TAG, "loadPosts succeeded");
-                    mutablePosts.value = result.data
+                    Log.d(TAG, "refresh succeeded")
                 }
                 is Result.Error -> {
-                    Log.w(TAG, "loadPosts failed", result.exception);
+                    Log.w(TAG, "refresh failed", result.exception)
                     mutableException.value = result.exception
                 }
             }
