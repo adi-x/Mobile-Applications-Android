@@ -17,8 +17,12 @@
         android:label="@string/post_list_fragment_label">
 
         <action
-            android:id="@+id/action_ItemListFragment_to_ItemEditFragment"
-            app:destination="@id/PostEditFragment" />
+            android:id="@+id/action_PostListFragment_to_PostEditFragment"
+            app:destination="@id/PostEditFragment"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/slide_out"
+            app:popEnterAnim="@anim/slide_in"
+            app:popExitAnim="@anim/slide_out"/>
     </fragment>
 
     <fragment
@@ -28,7 +32,7 @@
         tools:layout="@layout/fragment_post_edit">
 
         <action
-            android:id="@+id/action_ItemEditFragment_to_ItemListFragment"
+            android:id="@+id/action_PostEditFragment_to_PostListFragment"
             app:destination="@id/PostListFragment" />
     </fragment>
 </navigation>

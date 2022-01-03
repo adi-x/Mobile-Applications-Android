@@ -26,7 +26,7 @@ class PostListAdapter(
 
     private var onPostClick: View.OnClickListener = View.OnClickListener { view ->
         val post = view.tag as Post
-        fragment.findNavController().navigate(R.id.PostEditFragment, Bundle().apply {
+        fragment.findNavController().navigate(R.id.action_PostListFragment_to_PostEditFragment, Bundle().apply {
             putLong(PostEditFragment.POST_ID, post.id)
         })
     };

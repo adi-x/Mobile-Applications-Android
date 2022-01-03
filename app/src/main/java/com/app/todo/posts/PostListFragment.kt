@@ -1,12 +1,16 @@
 package com.app.todo.posts
 
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.constraintlayout.widget.Constraints
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
@@ -14,18 +18,15 @@ import com.app.R
 import com.app.auth.data.AuthRepository
 import com.app.core.TAG
 import com.app.databinding.FragmentPostListBinding
-import android.net.*
 import androidx.work.*
-import kotlinx.android.synthetic.main.activity_main.*
 import kotlin.random.Random
 
-class PostListFragment : Fragment() {
+class PostListFragment : Fragment(), SensorEventListener {
     private var _binding: FragmentPostListBinding? = null
     private lateinit var postListAdapter: PostListAdapter
     private lateinit var postsModel: PostListViewModel
     private val binding get() = _binding!!
-
-
+    private var latestLightReading: Float = 0f;
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -33,6 +34,11 @@ class PostListFragment : Fragment() {
     ): View? {
         Log.i(TAG, "onCreateView")
         _binding = FragmentPostListBinding.inflate(inflater, container, false)
+        val sensorManager: SensorManager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val light = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
+        light?.also {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+        }
         return binding.root
     }
 
@@ -42,7 +48,8 @@ class PostListFragment : Fragment() {
             .build()
         val x: Int = Random.nextInt(5, 25)
         val inputData = Data.Builder()
-            .putString("delay", x.toString())
+            .putInt("delay", x)
+            .putFloat("light", latestLightReading)
             .build()
         val myWork = OneTimeWorkRequest.Builder(NotifWorker::class.java)
             .setConstraints(constraints)
@@ -108,5 +115,13 @@ class PostListFragment : Fragment() {
         super.onDestroyView()
         Log.i(TAG, "onDestroyView")
         _binding = null
+    }
+
+    override fun onSensorChanged(p0: SensorEvent) {
+        latestLightReading = p0.values[0];
+    }
+
+    override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
+        Log.d(TAG,"Light sensor is reporting accuracy: $p1")
     }
 }

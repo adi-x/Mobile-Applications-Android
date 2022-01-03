@@ -4,12 +4,15 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Context.*
 import android.content.Intent
+import android.hardware.Sensor
+import android.hardware.Sensor.TYPE_LIGHT
+import android.hardware.SensorManager
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.work.ListenableWorker
 import androidx.work.Worker
 import androidx.work.WorkerParameters
@@ -23,18 +26,18 @@ class NotifWorker (
     ) : Worker(context, workerParams) {
         override fun doWork(): ListenableWorker.Result {
             // perform long running operation
-            val delay: Int = inputData.getString("delay")?.toInt()!!
+            val delay: Int = inputData.getInt("delay", 0)
             for (i in 1..delay) {
                 TimeUnit.SECONDS.sleep(1)
                 Log.d("Worker", "progress: $i / $delay")
             }
             createNotificationChannel()
-            createNotification(delay)
+            createNotification(delay, inputData.getFloat("light", 0f))
             return ListenableWorker.Result.success()
         }
     val CHANNEL_ID = "CHANNEL_ID"
 
-    private fun createNotification(x: Int) {
+    private fun createNotification(x: Int, lx: Float) {
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -42,7 +45,7 @@ class NotifWorker (
         val builder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("The Message")
-            .setContentText("This is the message that you have requested $x seconds ago.")
+            .setContentText("Message requested $x seconds ago. The light sensor is reading: $lx")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
@@ -60,7 +63,7 @@ class NotifWorker (
                 description = descriptionText
             }
             val notificationManager: NotificationManager =
-                applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }
